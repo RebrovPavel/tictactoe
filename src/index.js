@@ -131,7 +131,6 @@ function isEnd() {
     element = document.body.querySelector('.won-title');
     if (!element.matches('.hidden')) {
       element.classList.add('hidden');
-      element.innerText = '';
       [...document.body.querySelectorAll('.cell')].forEach(e =>
         e.classList.remove('win', 'vertical', 'horizontal', 'diagonal-right', 'diagonal-left')
       );
@@ -144,7 +143,8 @@ function isEnd() {
 
 isEnd();
 
-function gameUpdate() {
+function statusUpdate() {
+  localStorage.setItem('crossTurn', JSON.stringify(crossTurn));
   localStorage.setItem('turns', JSON.stringify(turns));
   localStorage.setItem('redo', JSON.stringify(redo));
   checkButtons();
@@ -158,7 +158,7 @@ element.addEventListener('click', event => {
     drawField(event.target);
     turns.push(event.target.id);
     redo = [];
-    gameUpdate();
+    statusUpdate();
     isEnd();
   }
 });
@@ -169,7 +169,7 @@ element.addEventListener('click', () => {
   const elementID = turns.pop();
   document.getElementById(elementID).className = 'cell';
   redo.push(elementID);
-  gameUpdate();
+  statusUpdate();
   isEnd();
 });
 
@@ -177,9 +177,8 @@ element = document.body.querySelector('.redo-btn'); // REDO click event
 element.addEventListener('click', () => {
   const elementID = redo.pop();
   drawField(document.getElementById(elementID));
-  crossTurn = !crossTurn;
   turns.push(elementID);
-  gameUpdate();
+  statusUpdate();
   isEnd();
 });
 
@@ -196,7 +195,7 @@ element = document.body.querySelector('.restart-btn'); // RESTART click event
 element.addEventListener('click', () => {
   clearField();
   document.body.querySelector('.won-title').classList.add('hidden');
-  gameUpdate();
+  statusUpdate();
 });
 
 window.addEventListener('storage', () => {
