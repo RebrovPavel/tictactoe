@@ -1,3 +1,4 @@
+const size = document.body.querySelector('.row').childElementCount;
 let element;
 let crossTurn = true;
 let turns = [];
@@ -49,10 +50,10 @@ function checkRow(cells, winType = false) {
     } else {
       row = 0;
     }
-    if (row === 3) {
+    if (row === size) {
       if (winType !== false) {
         // add win class to cells
-        cells.filter((_e, i) => i <= cur && i >= cur - 2).forEach(e => e.classList.add('win', winType));
+        cells.filter((_e, i) => i <= cur && i >= cur - size - 1).forEach(e => e.classList.add('win', winType));
       }
       return 'Crosses';
     }
@@ -65,10 +66,10 @@ function checkRow(cells, winType = false) {
     } else {
       row = 0;
     }
-    if (row === 3) {
+    if (row === size) {
       if (winType !== false) {
         // add win class to cells
-        cells.filter((_e, i) => i <= cur && i >= cur - 2).forEach(e => e.classList.add('win', winType));
+        cells.filter((_e, i) => i <= cur && i >= cur - size - 1).forEach(e => e.classList.add('win', winType));
       }
       return 'Toes';
     }
@@ -87,7 +88,6 @@ function checkWinner() {
     }
   }
   // check win vertical
-  const size = document.body.querySelector('.row').childElementCount;
   element = [...document.body.querySelectorAll('.cell')];
   for (let cur = 0; cur < size; cur += 1) {
     const children = element.filter((_e, i) => (i - cur) % size === 0);
