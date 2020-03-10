@@ -3,29 +3,35 @@ let crossTurn = true;
 let turns = [];
 let redo = [];
 
-function checkRow(cells) {
-  let cur = 0;
+function checkRow(cells, winType = false) {
   let row = 0;
-  while (cur < cells.length) {
+  for (let cur = 0; cur < cells.length; cur += 1) {
     if (cells[cur].matches('.ch')) {
       row += 1;
-    }
-    cur += 1;
-  }
-  if (row === 3) {
-    return 'Crosses';
-  }
-
-  cur = 0;
-  row = 0;
-  while (cur < cells.length) {
-    if (cells[cur].matches('.r')) {
-      row += 1;
+    } else {
+      row = 0;
     }
     if (row === 3) {
+      if (winType !== false) {
+        cells.filter((_e, i) => i <= cur && i >= cur - 2).forEach(e => e.classList.add('win', winType));
+      }
+      return 'Crosses';
+    }
+  }
+
+  row = 0;
+  for (let cur = 0; cur < cells.length; cur += 1) {
+    if (cells[cur].matches('.r')) {
+      row += 1;
+    } else {
+      row = 0;
+    }
+    if (row === 3) {
+      if (winType !== false) {
+        cells.filter((_e, i) => i <= cur && i >= cur - 2).forEach(e => e.classList.add('win', winType));
+      }
       return 'Toes';
     }
-    cur += 1;
   }
 
   return false;
@@ -37,8 +43,7 @@ function checkWinner() {
   while (element[0]) {
     const children = [...element.pop().children];
     if (checkRow(children)) {
-      children.forEach(e => e.classList.add('win', 'horizontal'));
-      return checkRow(children);
+      return checkRow(children, 'horizontal');
     }
   }
   // check win vertical
@@ -47,22 +52,19 @@ function checkWinner() {
   for (let cur = 0; cur < size; cur += 1) {
     const children = element.filter((_e, i) => (i - cur) % size === 0);
     if (checkRow(children)) {
-      children.forEach(e => e.classList.add('win', 'vertical'));
-      return checkRow(children);
+      return checkRow(children, 'vertical');
     }
   }
   // check win diagonal-right
   element = [...document.body.querySelectorAll('.cell')];
   let children = element.filter((_e, i) => i % (size + 1) === 0);
   if (checkRow(children)) {
-    children.forEach(e => e.classList.add('win', 'diagonal-right'));
-    return checkRow(children);
+    return checkRow(children, 'diagonal-right');
   }
   // check win diagonal-left
   children = element.filter((_e, i) => i % (size - 1) === 0 && i > 0 && i < size * size - 1);
   if (checkRow(children)) {
-    children.forEach(e => e.classList.add('win', 'diagonal-left'));
-    return checkRow(children);
+    return checkRow(children, 'diagonal-left');
   }
   // check draw
   if (element.every(e => e.matches('.ch') || e.matches('.r'))) {
@@ -130,8 +132,7 @@ element.addEventListener('click', event => {
       event.target.classList.add('r');
       crossTurn = true;
     }
-
-    turns.push(event.target);
+    turns.push(event.target.id);
     redo = [];
     checkButtons();
   }
@@ -142,28 +143,29 @@ element.addEventListener('click', event => {
 element = document.body.querySelector('.undo-btn'); // UNDO click event
 element.addEventListener('click', () => {
   crossTurn = !crossTurn;
-  element = turns.pop();
-  element.className = 'cell';
-  redo.push(element);
+  const elementID = turns.pop();
+  document.getElementById(elementID).className = 'cell';
+  redo.push(elementID);
   checkButtons();
 });
 
 element = document.body.querySelector('.redo-btn'); // REDO click event
 element.addEventListener('click', () => {
-  element = redo.pop();
+  const elementID = redo.pop();
   if (crossTurn) {
-    element.classList.add('ch');
+    document.getElementById(elementID).classList.add('ch');
   } else {
-    element.classList.add('r');
+    document.getElementById(elementID).classList.add('r');
   }
 
   crossTurn = !crossTurn;
-  turns.push(element);
+  turns.push(elementID);
   checkButtons();
 });
 
 element = document.body.querySelector('.restart-btn'); // RESTART click event
 element.addEventListener('click', () => {
+  crossTurn = true;
   element = [...document.body.querySelectorAll('.cell')];
   element.forEach(e =>
     e.classList.remove('win', 'ch', 'r', 'vertical', 'horizontal', 'diagonal-right', 'diagonal-left')
