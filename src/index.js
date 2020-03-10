@@ -3,6 +3,44 @@ let crossTurn = true;
 let turns = [];
 let redo = [];
 
+function checkButtons() {
+  element = document.body.querySelector('.undo-btn'); // check UNDO
+  if (turns.length === 0) {
+    element.disabled = true;
+  } else {
+    element.disabled = false;
+  }
+  element = document.body.querySelector('.redo-btn'); // check REDO
+  if (redo.length === 0) {
+    element.disabled = true;
+  } else {
+    element.disabled = false;
+  }
+}
+
+function drawField(target) {
+  if (crossTurn) {
+    target.classList.add('ch');
+    crossTurn = false;
+  } else {
+    target.classList.add('r');
+    crossTurn = true;
+  }
+}
+
+function loadStorage() {
+  if (localStorage.getItem('turns') != null) {
+    turns = JSON.parse(localStorage.getItem('turns'));
+    turns.forEach(e => drawField(document.getElementById(e)));
+  }
+  if (localStorage.getItem('redo') != null) {
+    redo = JSON.parse(localStorage.getItem('redo'));
+  }
+  checkButtons();
+}
+
+loadStorage();
+
 function checkRow(cells, winType = false) {
   let row = 0;
   for (let cur = 0; cur < cells.length; cur += 1) {
@@ -13,6 +51,7 @@ function checkRow(cells, winType = false) {
     }
     if (row === 3) {
       if (winType !== false) {
+        // add win class to cells
         cells.filter((_e, i) => i <= cur && i >= cur - 2).forEach(e => e.classList.add('win', winType));
       }
       return 'Crosses';
@@ -28,6 +67,7 @@ function checkRow(cells, winType = false) {
     }
     if (row === 3) {
       if (winType !== false) {
+        // add win class to cells
         cells.filter((_e, i) => i <= cur && i >= cur - 2).forEach(e => e.classList.add('win', winType));
       }
       return 'Toes';
@@ -74,70 +114,53 @@ function checkWinner() {
   return false;
 }
 
-function checkButtons() {
-  element = document.body.querySelector('.undo-btn'); // check UNDO
-  if (turns.length === 0) {
-    element.disabled = true;
-  } else {
-    element.disabled = false;
-  }
-  element = document.body.querySelector('.redo-btn'); // check REDO
-  if (redo.length === 0) {
-    element.disabled = true;
-  } else {
-    element.disabled = false;
-  }
-}
-
 function isEnd() {
   const winner = checkWinner();
-  if (winner === 'Crosses') {
+  if (winner !== false) {
     element = document.body.querySelector('.won-title');
     element.classList.remove('hidden');
     element = document.body.querySelector('.won-message');
-    element.innerText = `Crosses won!`;
-    turns = [];
-    redo = [];
-  } else if (winner === 'Toes') {
-    element = document.body.querySelector('.won-title');
-    element.classList.remove('hidden');
-    element = document.body.querySelector('.won-message');
-    element.innerText = `Toes won!`;
-    turns = [];
-    redo = [];
-  } else if (winner === 'Draw') {
-    element = document.body.querySelector('.won-title');
-    element.classList.remove('hidden');
-    element = document.body.querySelector('.won-message');
-    element.innerText = `It's a draw!`;
-    turns = [];
-    redo = [];
+    if (winner === 'Crosses') {
+      element.innerText = `Crosses won!`;
+    } else if (winner === 'Toes') {
+      element.innerText = `Toes won!`;
+    } else if (winner === 'Draw') {
+      element.innerText = `It's a draw!`;
+    }
   } else {
+    element = document.body.querySelector('.won-title');
+    if (!element.matches('.hidden')) {
+      element.classList.add('hidden');
+      element.innerText = '';
+      [...document.body.querySelectorAll('.cell')].forEach(e =>
+        e.classList.remove('win', 'vertical', 'horizontal', 'diagonal-right', 'diagonal-left')
+      );
+    }
     return false;
   }
 
-  checkButtons();
   return true;
+}
+
+isEnd();
+
+function gameUpdate() {
+  localStorage.setItem('turns', JSON.stringify(turns));
+  localStorage.setItem('redo', JSON.stringify(redo));
+  checkButtons();
 }
 
 element = document.body.querySelector('.field'); // FIELD click event
 element.addEventListener('click', event => {
   const firstAtribute = event.target.classList[0];
-  const secontAtribute = event.target.classList[1];
-  if (firstAtribute === 'cell' && !secontAtribute) {
-    if (crossTurn) {
-      event.target.classList.add('ch');
-      crossTurn = false;
-    } else {
-      event.target.classList.add('r');
-      crossTurn = true;
-    }
+  const secondAtribute = event.target.classList[1];
+  if (firstAtribute === 'cell' && !secondAtribute) {
+    drawField(event.target);
     turns.push(event.target.id);
     redo = [];
-    checkButtons();
+    gameUpdate();
+    isEnd();
   }
-
-  isEnd();
 });
 
 element = document.body.querySelector('.undo-btn'); // UNDO click event
@@ -146,30 +169,38 @@ element.addEventListener('click', () => {
   const elementID = turns.pop();
   document.getElementById(elementID).className = 'cell';
   redo.push(elementID);
-  checkButtons();
+  gameUpdate();
+  isEnd();
 });
 
 element = document.body.querySelector('.redo-btn'); // REDO click event
 element.addEventListener('click', () => {
   const elementID = redo.pop();
-  if (crossTurn) {
-    document.getElementById(elementID).classList.add('ch');
-  } else {
-    document.getElementById(elementID).classList.add('r');
-  }
-
+  drawField(document.getElementById(elementID));
   crossTurn = !crossTurn;
   turns.push(elementID);
-  checkButtons();
+  gameUpdate();
+  isEnd();
 });
+
+function clearField() {
+  crossTurn = true;
+  turns = [];
+  redo = [];
+  [...document.body.querySelectorAll('.cell')].forEach(e =>
+    e.classList.remove('ch', 'r', 'win', 'vertical', 'horizontal', 'diagonal-right', 'diagonal-left')
+  );
+}
 
 element = document.body.querySelector('.restart-btn'); // RESTART click event
 element.addEventListener('click', () => {
-  crossTurn = true;
-  element = [...document.body.querySelectorAll('.cell')];
-  element.forEach(e =>
-    e.classList.remove('win', 'ch', 'r', 'vertical', 'horizontal', 'diagonal-right', 'diagonal-left')
-  );
-  element = document.body.querySelector('.won-title');
-  element.classList.add('hidden');
+  clearField();
+  document.body.querySelector('.won-title').classList.add('hidden');
+  gameUpdate();
+});
+
+window.addEventListener('storage', () => {
+  clearField();
+  loadStorage();
+  isEnd();
 });
